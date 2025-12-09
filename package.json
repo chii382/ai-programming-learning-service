@@ -16,12 +16,15 @@
     "@mui/icons-material": "^5.16.7",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
-    "@mui/material-nextjs": "^5.16.7"
+    "@mui/material-nextjs": "^5.16.7",
+    "nodemailer": "^6.9.8",
+    "mongoose": "^8.0.3"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/nodemailer": "^6.4.14",
     "typescript": "^5"
   }
 }
