@@ -9,6 +9,21 @@
 # testing
 /coverage
 
+# local artifacts (do not commit)
+/tmp/
+/test-results/
+
+# ad-hoc local scripts (do not commit)
+/build-check.js
+/check-build.js
+/check-build-error.js
+/check-contact-html.js
+/check-success-html.js
+/final-build-check.js
+/run-build.js
+/test-contact-api.js
+/verify-build.js
+
 # next.js
 /.next/
 /out/

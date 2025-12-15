@@ -113,6 +113,11 @@ export default function ContactPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (data && typeof data === 'object' && 'fieldErrors' in data && data.fieldErrors) {
+          setErrors(data.fieldErrors as FormErrors);
+          setSubmitError('');
+          return;
+        }
         throw new Error(data.error || '送信に失敗しました');
       }
 
@@ -149,6 +154,7 @@ export default function ContactPage() {
           <Box
             component="form"
             onSubmit={handleSubmit}
+            noValidate
             sx={{
               bgcolor: 'background.paper',
               p: 4,

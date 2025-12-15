@@ -1,10 +1,8 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
-import { theme } from './theme';
+import ThemeProvider from './components/ThemeProvider';
 import Header from './components/Header';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -23,8 +21,7 @@ export default function RootLayout({
     <html lang="ja">
       <body className={inter.className}>
         <AppRouterCacheProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
+          <ThemeProvider>
             <Header />
             {children}
           </ThemeProvider>
