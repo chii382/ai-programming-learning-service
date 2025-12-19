@@ -1,14 +1,15 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export interface IContact extends Document {
+export interface IUser extends Document {
   name: string;
   email: string;
-  subject: string;
-  message: string;
+  image?: string;
+  role: string;
   createdAt: Date;
+  updatedAt: Date;
 }
 
-const ContactSchema: Schema = new Schema(
+const UserSchema: Schema = new Schema(
   {
     name: {
       type: String,
@@ -19,6 +20,7 @@ const ContactSchema: Schema = new Schema(
     email: {
       type: String,
       required: [true, 'メールアドレスは必須です'],
+      unique: true,
       maxlength: [255, 'メールアドレスは255文字以内で入力してください'],
       trim: true,
       lowercase: true,
@@ -27,38 +29,24 @@ const ContactSchema: Schema = new Schema(
         '有効なメールアドレスを入力してください',
       ],
     },
-    subject: {
+    image: {
       type: String,
-      required: [true, '件名は必須です'],
-      maxlength: [200, '件名は200文字以内で入力してください'],
+      maxlength: [500, '画像URLは500文字以内で入力してください'],
       trim: true,
     },
-    message: {
+    role: {
       type: String,
-      required: [true, '本文は必須です'],
-      maxlength: [5000, '本文は5000文字以内で入力してください'],
-      trim: true,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
+      enum: ['user', 'admin'],
+      default: 'user',
     },
   },
   {
-    timestamps: false,
+    timestamps: true,
   }
 );
 
 // モデルが既に存在する場合はそれを使用、存在しない場合は新規作成
-const Contact: Model<IContact> =
-  mongoose.models.Contact || mongoose.model<IContact>('Contact', ContactSchema);
+const User: Model<IUser> =
+  mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 
-export default Contact;
-
-
-
-
-
-
-
-
+export default User;
