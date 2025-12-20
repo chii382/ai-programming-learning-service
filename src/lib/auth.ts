@@ -45,6 +45,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: 'database',
   },
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  trustHost: true, // Vercel環境でのリダイレクトURI検証を有効化
 });
 
 
