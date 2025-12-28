@@ -112,6 +112,11 @@ export default function Header() {
                 <MenuItem component={Link} href="/dashboard" onClick={handleClose}>
                   ダッシュボード
                 </MenuItem>
+                {user?.role === 'admin' && (
+                  <MenuItem component={Link} href="/admin" onClick={handleClose}>
+                    管理画面
+                  </MenuItem>
+                )}
                 <MenuItem onClick={handleSignOut}>ログアウト</MenuItem>
               </Menu>
             </>
@@ -130,4 +135,6 @@ export default function Header() {
     </AppBar>
   );
 }
+
+
 

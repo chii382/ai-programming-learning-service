@@ -376,45 +376,24 @@ export default function HomePage() {
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
               クレジットカード不要。今すぐ無料で始められます。
             </Typography>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <Button
-                variant="contained"
-                size="large"
-                sx={{
-                  bgcolor: 'white',
-                  color: theme.palette.primary.main,
-                  '&:hover': {
-                    bgcolor: 'rgba(255, 255, 255, 0.9)',
-                  },
-                  px: 6,
-                  py: 1.5,
-                  fontSize: '1.1rem',
-                }}
-                component={Link}
-                href="/auth/signup"
-              >
-                無料で始める
-              </Button>
-              <Button
-                variant="outlined"
-                size="large"
-                sx={{
-                  borderColor: 'white',
-                  color: 'white',
-                  '&:hover': {
-                    borderColor: 'rgba(255, 255, 255, 0.8)',
-                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                  },
-                  px: 6,
-                  py: 1.5,
-                  fontSize: '1.1rem',
-                }}
-                component={Link}
-                href="/auth/login"
-              >
-                ログイン
-              </Button>
-            </Stack>
+            <Button
+              variant="contained"
+              size="large"
+              sx={{
+                bgcolor: 'white',
+                color: theme.palette.primary.main,
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.9)',
+                },
+                px: 6,
+                py: 1.5,
+                fontSize: '1.1rem',
+              }}
+              component={Link}
+              href="/auth/signup"
+            >
+              無料で始める
+            </Button>
           </Stack>
         </Container>
       </Box>

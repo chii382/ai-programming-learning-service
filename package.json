@@ -17,6 +17,7 @@
     "@mui/icons-material": "^5.16.7",
     "@mui/material": "^5.16.7",
     "@mui/material-nextjs": "^5.16.7",
+    "@mui/x-data-grid": "^8.23.0",
     "mongodb": "^6.21.0",
     "mongoose": "^8.0.3",
     "next": "^15.5.9",
