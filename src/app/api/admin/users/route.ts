@@ -49,15 +49,53 @@ export async function GET(request: NextRequest) {
       .toArray();
 
     return NextResponse.json({
-      users: users.map((user) => ({
-        id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        role: user.role || 'user',
-        image: user.image || null,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      })),
+      users: users.map((user: any) => {
+        // createdAtとupdatedAtを適切に処理
+        // MongoDBから取得した日付はDateオブジェクトまたはISODateオブジェクトの可能性がある
+        let createdAt: string;
+        let updatedAt: string;
+        
+        try {
+          if (user.createdAt) {
+            createdAt = user.createdAt instanceof Date 
+              ? user.createdAt.toISOString() 
+              : new Date(user.createdAt).toISOString();
+          } else {
+            // createdAtが存在しない場合は、_idからタイムスタンプを推定（MongoDBのObjectIdには作成時刻が含まれる）
+            const userId = user._id instanceof ObjectId ? user._id : new ObjectId(user._id);
+            createdAt = userId.getTimestamp().toISOString();
+            console.warn(`ユーザー ${user.email} のcreatedAtが存在しないため、_idから推定: ${createdAt}`);
+          }
+        } catch (error) {
+          console.error(`createdAt処理エラー (${user.email}):`, error);
+          createdAt = new Date().toISOString();
+        }
+        
+        try {
+          if (user.updatedAt) {
+            updatedAt = user.updatedAt instanceof Date 
+              ? user.updatedAt.toISOString() 
+              : new Date(user.updatedAt).toISOString();
+          } else {
+            // updatedAtが存在しない場合はcreatedAtと同じにする
+            updatedAt = createdAt;
+            console.warn(`ユーザー ${user.email} のupdatedAtが存在しないため、createdAtを使用: ${updatedAt}`);
+          }
+        } catch (error) {
+          console.error(`updatedAt処理エラー (${user.email}):`, error);
+          updatedAt = createdAt || new Date().toISOString();
+        }
+        
+        return {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role || 'user',
+          image: user.image || null,
+          createdAt,
+          updatedAt,
+        };
+      }),
       total,
       page,
       pageSize,
@@ -98,40 +136,17 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const client = await clientPromise;
-    const db = client.db();
-    
-    // 現在のログインユーザーIDを取得
-    const currentUserId = authResult.user?.id;
-    
     // 自分自身の権限変更を防ぐ
-    if (userId === currentUserId) {
+    const currentUserId = authResult.user?.id;
+    if (currentUserId && currentUserId === userId) {
       return NextResponse.json(
         { error: '自分自身の権限は変更できません' },
-        { status: 400 }
+        { status: 403 }
       );
     }
-    
-    // 変更前のユーザー情報を取得
-    const userBefore = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-    
-    if (!userBefore) {
-      return NextResponse.json(
-        { error: 'ユーザーが見つかりませんでした' },
-        { status: 404 }
-      );
-    }
-    
-    // 最後の管理者をuserに変更しようとしている場合を防ぐ
-    if (userBefore.role === 'admin' && role === 'user') {
-      const adminCount = await db.collection('users').countDocuments({ role: 'admin' });
-      if (adminCount === 1) {
-        return NextResponse.json(
-          { error: '最後の管理者の権限は変更できません' },
-          { status: 400 }
-        );
-      }
-    }
+
+    const client = await clientPromise;
+    const db = client.db();
 
     // ユーザーのロールを更新
     const result = await db.collection('users').updateOne(
@@ -176,40 +191,17 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // 自分自身の削除を防ぐ
+    const currentUserId = authResult.user?.id;
+    if (currentUserId && currentUserId === userId) {
+      return NextResponse.json(
+        { error: '自分自身は削除できません' },
+        { status: 403 }
+      );
+    }
+
     const client = await clientPromise;
     const db = client.db();
-    
-    // 現在のログインユーザーIDを取得
-    const currentUserId = authResult.user?.id;
-    
-    // 自分自身の削除を防ぐ
-    if (userId === currentUserId) {
-      return NextResponse.json(
-        { error: '自分自身を削除することはできません' },
-        { status: 400 }
-      );
-    }
-    
-    // 削除前のユーザー情報を取得
-    const userToDelete = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-    
-    if (!userToDelete) {
-      return NextResponse.json(
-        { error: 'ユーザーが見つかりませんでした' },
-        { status: 404 }
-      );
-    }
-    
-    // 最後の管理者の削除を防ぐ
-    if (userToDelete.role === 'admin') {
-      const adminCount = await db.collection('users').countDocuments({ role: 'admin' });
-      if (adminCount === 1) {
-        return NextResponse.json(
-          { error: '最後の管理者を削除することはできません' },
-          { status: 400 }
-        );
-      }
-    }
 
     // ユーザーを削除
     const result = await db.collection('users').deleteOne({ _id: new ObjectId(userId) });

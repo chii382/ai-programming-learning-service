@@ -376,24 +376,24 @@ export default function HomePage() {
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
               クレジットカード不要。今すぐ無料で始められます。
             </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              sx={{
-                bgcolor: 'white',
-                color: theme.palette.primary.main,
-                '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.9)',
-                },
-                px: 6,
-                py: 1.5,
-                fontSize: '1.1rem',
-              }}
-              component={Link}
-              href="/auth/signup"
-            >
-              無料で始める
-            </Button>
+              <Button
+                variant="contained"
+                size="large"
+                sx={{
+                  bgcolor: 'white',
+                  color: theme.palette.primary.main,
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 255, 255, 0.9)',
+                  },
+                  px: 6,
+                  py: 1.5,
+                  fontSize: '1.1rem',
+                }}
+                component={Link}
+                href="/auth/signup"
+              >
+                無料で始める
+              </Button>
           </Stack>
         </Container>
       </Box>
@@ -411,9 +411,36 @@ export default function HomePage() {
         <Container maxWidth="lg">
           <Grid container spacing={4}>
             <Grid item xs={12} md={6}>
-              <Typography variant="h6" gutterBottom>
-                AIコードレビュー
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5, mb: 2 }}>
+                <Typography
+                  variant="body2"
+                  component="span"
+                  sx={{
+                    fontWeight: 500,
+                    color: 'text.secondary',
+                    fontSize: '0.875rem',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  コードレビューサービス
+                </Typography>
+                <Typography
+                  variant="h5"
+                  component="span"
+                  sx={{
+                    fontWeight: 800,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    fontSize: '1.5rem',
+                    letterSpacing: '-0.02em',
+                    ml: 0.5,
+                  }}
+                >
+                  Reviewly
+                </Typography>
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 プログラミング学習を加速させる、次世代のコードレビューサービス
               </Typography>
@@ -454,29 +481,12 @@ export default function HomePage() {
                     </Link>
                   </Stack>
                 </Grid>
-                <Grid item xs={6} sm={3}>
-                  <Stack spacing={1}>
-                    <Typography variant="subtitle2" fontWeight={600}>
-                      法的情報
-                    </Typography>
-                    <Link href="/terms" style={{ textDecoration: 'none', color: 'inherit' }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ '&:hover': { color: 'primary.main' } }}>
-                        利用規約
-                      </Typography>
-                    </Link>
-                    <Link href="/privacy" style={{ textDecoration: 'none', color: 'inherit' }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ '&:hover': { color: 'primary.main' } }}>
-                        プライバシーポリシー
-                      </Typography>
-                    </Link>
-                  </Stack>
-                </Grid>
               </Grid>
             </Grid>
           </Grid>
           <Box sx={{ mt: 4, pt: 4, borderTop: 1, borderColor: 'divider' }}>
             <Typography variant="body2" color="text.secondary" textAlign="center">
-              © 2024 AIコードレビュー. All rights reserved.
+              © 2024 コードレビューサービス　Reviewly. All rights reserved.
             </Typography>
           </Box>
         </Container>

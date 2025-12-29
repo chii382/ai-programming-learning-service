@@ -98,7 +98,7 @@ ${message}
   }
 
   await sendEmail({
-    from: `"コードレビューサービス" <${smtpUser}>`,
+    from: `"コードレビューサービス　Reviewly" <${smtpUser}>`,
     to: adminEmail,
     subject: emailSubject,
     text: emailText,

@@ -11,12 +11,14 @@ import {
   MenuItem,
   Box,
   IconButton,
+  useTheme,
 } from '@mui/material';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { AccountCircle } from '@mui/icons-material';
 
 export default function Header() {
+  const theme = useTheme();
   const { data: session, status } = useSession();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -50,28 +52,50 @@ export default function Header() {
     >
       <Toolbar sx={{ py: 1, justifyContent: 'space-between' }}>
         <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Typography
-            variant="h6"
-            component="div"
+          <Box
             sx={{
-              fontWeight: 700,
-              color: 'primary.main',
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: 0.5,
               cursor: 'pointer',
               '&:hover': {
                 opacity: 0.8,
               },
             }}
           >
-            コードレビューサービス
-          </Typography>
+            <Typography
+              variant="body2"
+              component="span"
+              sx={{
+                fontWeight: 500,
+                color: 'text.secondary',
+                fontSize: '0.875rem',
+                letterSpacing: '0.05em',
+              }}
+            >
+              コードレビューサービス
+            </Typography>
+            <Typography
+              variant="h5"
+              component="span"
+              sx={{
+                fontWeight: 800,
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                letterSpacing: '-0.02em',
+                ml: 0.5,
+              }}
+            >
+              Reviewly
+            </Typography>
+          </Box>
         </Link>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {status === 'loading' ? (
-            <Typography variant="body2" color="text.secondary">
-              読み込み中...
-            </Typography>
-          ) : session?.user ? (
+          {session?.user ? (
             <>
               <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1 }}>
                 <Avatar

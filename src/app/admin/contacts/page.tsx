@@ -137,12 +137,6 @@ export default function AdminContactsPage() {
               setSelectedContact(params.row as Contact);
               setDetailDialogOpen(true);
             }}
-            sx={{
-              minWidth: 'auto',
-              px: 1.5,
-              fontSize: '0.75rem',
-              whiteSpace: 'nowrap',
-            }}
           >
             詳細
           </Button>
@@ -154,12 +148,6 @@ export default function AdminContactsPage() {
             onClick={() => {
               setSelectedContact(params.row as Contact);
               setDeleteDialogOpen(true);
-            }}
-            sx={{
-              minWidth: 'auto',
-              px: 1.5,
-              fontSize: '0.75rem',
-              whiteSpace: 'nowrap',
             }}
           >
             削除

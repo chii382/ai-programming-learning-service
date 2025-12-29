@@ -21,8 +21,9 @@ import {
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import type { GridRenderCellParams } from '@mui/x-data-grid';
-import { Delete, Edit, Save } from '@mui/icons-material';
+import { Delete, Edit } from '@mui/icons-material';
 import { useSession } from 'next-auth/react';
+import { Tooltip } from '@mui/material';
 
 interface User {
   id: string;
@@ -36,8 +37,6 @@ interface User {
 
 export default function AdminUsersPage() {
   const { data: session } = useSession();
-  const currentUserId = session?.user?.id;
-  
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,30 +45,19 @@ export default function AdminUsersPage() {
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  
+  // 現在のログインユーザーIDを取得
+  const currentUserId = session?.user?.id;
 
   // ダイアログ状態
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newRole, setNewRole] = useState<string>('user');
-  
-  // 一括保存用の状態
-  const [pendingRoleChanges, setPendingRoleChanges] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchUsers();
   }, [page, pageSize, search]);
-  
-  // ページ範囲チェック用のuseEffect
-  useEffect(() => {
-    if (total > 0 && pageSize > 0) {
-      const maxPage = Math.max(0, Math.ceil(total / pageSize) - 1);
-      if (page > maxPage) {
-        setPage(Math.max(0, maxPage));
-      }
-    }
-  }, [total, pageSize]);
 
   const fetchUsers = async () => {
     try {
@@ -106,93 +94,36 @@ export default function AdminUsersPage() {
     setPage(0);
   };
 
-  const handleRoleChange = () => {
+  const handleRoleChange = async () => {
     if (!selectedUser) return;
 
-    // 自分自身の権限変更を防ぐ
-    if (selectedUser.id === currentUserId) {
-      alert('自分自身の権限は変更できません');
-      setRoleDialogOpen(false);
-      setSelectedUser(null);
-      return;
-    }
-
-    // 即座にAPIを呼ばず、ローカルステートに変更を保存
-    setPendingRoleChanges((prev) => ({
-      ...prev,
-      [selectedUser.id]: newRole,
-    }));
-
-    // ユーザー一覧の表示も更新（即座に反映）
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === selectedUser.id ? { ...user, role: newRole } : user
-      )
-    );
-
-    setRoleDialogOpen(false);
-    setSelectedUser(null);
-  };
-
-  const handleSaveAll = async () => {
-    if (Object.keys(pendingRoleChanges).length === 0) {
-      alert('保存する変更がありません');
-      return;
-    }
-
-    // 自分自身の権限変更をチェック
-    const selfChange = Object.keys(pendingRoleChanges).find(userId => userId === currentUserId);
-    if (selfChange) {
-      alert('自分自身の権限は変更できません');
-      // 自分自身の変更を除外
-      const filteredChanges = Object.fromEntries(
-        Object.entries(pendingRoleChanges).filter(([userId]) => userId !== currentUserId)
-      );
-      setPendingRoleChanges(filteredChanges);
-      return;
-    }
-
     try {
-      setSaving(true);
-      const response = await fetch('/api/admin/users/batch', {
-        method: 'PUT',
+      const response = await fetch('/api/admin/users', {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          changes: Object.entries(pendingRoleChanges).map(([userId, role]) => ({
-            userId,
-            role,
-          })),
+          userId: selectedUser.id,
+          role: newRole,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '権限の一括保存に失敗しました');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || '権限の変更に失敗しました');
       }
 
-      // 保存成功後、変更をクリアして一覧を再取得
-      setPendingRoleChanges({});
-      await fetchUsers();
-      alert('権限の変更を保存しました');
+      setRoleDialogOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'エラーが発生しました');
-    } finally {
-      setSaving(false);
     }
   };
 
   const handleDelete = async () => {
     if (!selectedUser) return;
-
-    // 自分自身の削除を防ぐ
-    if (selectedUser.id === currentUserId) {
-      alert('自分自身を削除することはできません');
-      setDeleteDialogOpen(false);
-      setSelectedUser(null);
-      return;
-    }
 
     try {
       const response = await fetch('/api/admin/users', {
@@ -206,7 +137,7 @@ export default function AdminUsersPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'ユーザーの削除に失敗しました');
       }
 
@@ -221,105 +152,102 @@ export default function AdminUsersPage() {
   const columns: GridColDef[] = [
     { field: 'name', headerName: '名前', width: 200 },
     { field: 'email', headerName: 'メールアドレス', width: 250 },
-      {
-        field: 'role',
-        headerName: '権限',
-        width: 120,
-        renderCell: (params) => {
-          const user = params.row as User;
-          const displayRole = pendingRoleChanges[user.id] || params.value;
-          const hasPendingChange = pendingRoleChanges[user.id] !== undefined;
-          return (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography
-                variant="body2"
-                color={displayRole === 'admin' ? 'primary.main' : 'text.secondary'}
-                sx={{
-                  fontWeight: hasPendingChange ? 'bold' : 'normal',
-                  textDecoration: hasPendingChange ? 'underline' : 'none',
-                }}
-              >
-                {displayRole === 'admin' ? '管理者' : 'ユーザー'}
-              </Typography>
-              {hasPendingChange && (
-                <Typography variant="caption" color="warning.main" sx={{ ml: 0.5 }}>
-                  (未保存)
-                </Typography>
-              )}
-            </Box>
-          );
-        },
-      },
+    {
+      field: 'role',
+      headerName: '権限',
+      width: 120,
+      renderCell: (params) => (
+        <Typography variant="body2" color={params.value === 'admin' ? 'primary.main' : 'text.secondary'}>
+          {params.value === 'admin' ? '管理者' : 'ユーザー'}
+        </Typography>
+      ),
+    },
     {
       field: 'createdAt',
       headerName: '作成日時',
       width: 180,
-      renderCell: (params) => (
-        <Typography variant="body2">
-          {new Date(params.value).toLocaleString('ja-JP')}
-        </Typography>
-      ),
-    },
-      {
-        field: 'actions',
-        headerName: '操作',
-        width: 220,
-        sortable: false,
-        renderCell: (params: GridRenderCellParams) => {
-          const user = params.row as User;
-          const isCurrentUser = user.id === currentUserId;
-          const isAdmin = user.role === 'admin';
-          const adminCount = users.filter(u => u.role === 'admin').length;
-          const isLastAdmin = isAdmin && adminCount === 1;
-          const canEdit = !isCurrentUser && !isLastAdmin;
-          const canDelete = !isCurrentUser && !isLastAdmin;
-
+      renderCell: (params) => {
+        try {
+          const date = params.value ? new Date(params.value) : null;
+          if (!date || isNaN(date.getTime())) {
+            return <Typography variant="body2" color="error">日付エラー</Typography>;
+          }
           return (
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<Edit />}
-                onClick={() => {
-                  setSelectedUser(user);
-                  setNewRole(user.role);
-                  setRoleDialogOpen(true);
-                }}
-                disabled={!canEdit}
-                title={isCurrentUser ? '自分自身の権限は変更できません' : isLastAdmin ? '最後の管理者の権限は変更できません' : ''}
-                sx={{
-                  minWidth: 'auto',
-                  px: 1.5,
-                  fontSize: '0.75rem',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                権限変更
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                color="error"
-                startIcon={<Delete />}
-                onClick={() => {
-                  setSelectedUser(user);
-                  setDeleteDialogOpen(true);
-                }}
-                disabled={!canDelete}
-                title={isCurrentUser ? '自分自身を削除することはできません' : isLastAdmin ? '最後の管理者を削除することはできません' : ''}
-                sx={{
-                  minWidth: 'auto',
-                  px: 1.5,
-                  fontSize: '0.75rem',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                削除
-              </Button>
-            </Box>
+            <Typography variant="body2">
+              {date.toLocaleString('ja-JP', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Typography>
           );
-        },
+        } catch (error) {
+          return <Typography variant="body2" color="error">日付エラー</Typography>;
+        }
       },
+    },
+    {
+      field: 'actions',
+      headerName: '操作',
+      width: 200,
+      sortable: false,
+      renderCell: (params: GridRenderCellParams) => {
+        const isCurrentUser = currentUserId === params.row.id;
+        return (
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Tooltip title={isCurrentUser ? '自分自身の権限は変更できません' : ''}>
+              <span>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<Edit />}
+                  onClick={() => {
+                    setSelectedUser(params.row as User);
+                    setNewRole(params.row.role);
+                    setRoleDialogOpen(true);
+                  }}
+                  disabled={isCurrentUser}
+                  sx={{
+                    fontSize: '0.75rem',
+                    px: 1,
+                    py: 0.5,
+                    minWidth: 'auto',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  権限変更
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip title={isCurrentUser ? '自分自身は削除できません' : ''}>
+              <span>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="error"
+                  startIcon={<Delete />}
+                  onClick={() => {
+                    setSelectedUser(params.row as User);
+                    setDeleteDialogOpen(true);
+                  }}
+                  disabled={isCurrentUser}
+                  sx={{
+                    fontSize: '0.75rem',
+                    px: 1,
+                    py: 0.5,
+                    minWidth: 'auto',
+                  }}
+                >
+                  削除
+                </Button>
+              </span>
+            </Tooltip>
+          </Box>
+        );
+      },
+    },
   ];
 
   return (
@@ -328,7 +256,7 @@ export default function AdminUsersPage() {
         ユーザー管理
       </Typography>
 
-      <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+      <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
         <TextField
           label="検索（名前、メールアドレス）"
           value={searchInput}
@@ -338,23 +266,11 @@ export default function AdminUsersPage() {
               handleSearch();
             }
           }}
-          sx={{ flexGrow: 1, minWidth: 200 }}
+          sx={{ flexGrow: 1 }}
         />
         <Button variant="contained" onClick={handleSearch}>
           検索
         </Button>
-        {Object.keys(pendingRoleChanges).length > 0 && (
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<Save />}
-            onClick={handleSaveAll}
-            disabled={saving}
-            sx={{ ml: 'auto' }}
-          >
-            {saving ? '保存中...' : `変更を保存 (${Object.keys(pendingRoleChanges).length}件)`}
-          </Button>
-        )}
       </Box>
 
       {error && (
@@ -370,28 +286,12 @@ export default function AdminUsersPage() {
           paginationMode="server"
           paginationModel={{ page, pageSize }}
           onPaginationModelChange={(model) => {
-            // ページ変更時にエラーが発生しないように、範囲チェック
-            if (total > 0 && model.pageSize > 0) {
-              const maxPage = Math.max(0, Math.ceil(total / model.pageSize) - 1);
-              const validPage = Math.max(0, Math.min(model.page, maxPage));
-              setPage(validPage);
-              setPageSize(model.pageSize);
-            } else {
-              setPage(model.page);
-              setPageSize(model.pageSize);
-            }
+            setPage(model.page);
+            setPageSize(model.pageSize);
           }}
           rowCount={total}
           loading={loading}
           disableRowSelectionOnClick
-          pageSizeOptions={[10, 25, 50]}
-          initialState={{
-            pagination: {
-              paginationModel: {
-                pageSize: 10,
-              },
-            },
-          }}
         />
       </Box>
 
@@ -417,7 +317,7 @@ export default function AdminUsersPage() {
         <DialogActions>
           <Button onClick={() => setRoleDialogOpen(false)}>キャンセル</Button>
           <Button onClick={handleRoleChange} variant="contained">
-            変更を確定
+            変更
           </Button>
         </DialogActions>
       </Dialog>

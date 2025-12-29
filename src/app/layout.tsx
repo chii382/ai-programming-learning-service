@@ -9,7 +9,7 @@ import Header from './components/Header';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'AIコードレビュー - プログラミング学習を加速させる',
+  title: 'コードレビューサービス　Reviewly - プログラミング学習を加速させる',
   description: 'AIがあなたのコードをレビュー。24時間いつでも、どこでも。Claude AIが的確なフィードバックを提供します。',
 };
 
